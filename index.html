@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maps Game - RPG & Racing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            text-align: center;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .game-selector {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .game-btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .game-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .game-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            padding: 1rem;
+            gap: 1rem;
+        }
+
+        .map-container {
+            flex: 2;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+        }
+
+        .game-panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .game-panel h2 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .game-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-btn {
+            padding: 0.8rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .player-marker {
+            width: 30px;
+            height: 30px;
+            background: #ff4757;
+            border: 3px solid white;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .game-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🗺️ Maps Game Collection</h1>
+        <p>現実世界を舞台にしたRPG & レースゲーム</p>
+        <div class="game-selector">
+            <button class="game-btn active" onclick="switchGame('rpg')">🏰 RPG モード</button>
+            <button class="game-btn" onclick="switchGame('racing')">🏎️ レーシング モード</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="map-container">
+            <div id="map">
+                <div class="loading">Google Mapsを読み込み中...</div>
+            </div>
+        </div>
+
+        <div class="game-panel">
+            <div id="rpg-panel" class="game-mode-panel">
+                <h2>🏰 City Explorer RPG</h2>
+                <div class="game-info">
+                    <p><strong>レベル:</strong> <span id="player-level">1</span></p>
+                    <p><strong>HP:</strong> <span id="player-hp">100</span> / <span id="player-max-hp">100</span></p>
+                    <p><strong>MP:</strong> <span id="player-mp">50</span> / <span id="player-max-mp">50</span></p>
+                    <p><strong>経験値:</strong> <span id="player-exp">0</span> / <span id="exp-needed">100</span></p>
+                    <p><strong>所持金:</strong> <span id="player-gold">100</span> G</p>
+                    <p><strong>現在地:</strong> <span id="current-location">探索中...</span></p>
+                </div>
+                <div class="controls">
+                    <button class="control-btn" onclick="exploreArea()">🔍 周辺を探索</button>
+                    <button class="control-btn" onclick="findQuest()">📜 クエストを探す</button>
+                    <button class="control-btn" onclick="collectItem()">💎 アイテム収集</button>
+                    <button class="control-btn" onclick="openInventory()">🎒 インベントリ</button>
+                    <button class="control-btn" onclick="showPlayerStats()">📊 ステータス</button>
+                    <button class="control-btn" onclick="visitNearbyPOI()">🏛️ 近くの施設</button>
+                </div>
+                <div id="battle-panel" style="display: none; margin-top: 1rem; padding: 1rem; background: #ffebee; border-radius: 8px;">
+                    <h3>⚔️ バトル中</h3>
+                    <p><strong>敵:</strong> <span id="enemy-name"></span></p>
+                    <p><strong>敵HP:</strong> <span id="enemy-hp"></span></p>
+                    <div class="battle-controls" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button class="control-btn" onclick="battleAction('attack')" style="flex: 1;">⚔️ 攻撃</button>
+                        <button class="control-btn" onclick="battleAction('skill')" style="flex: 1;">✨ スキル</button>
+                        <button class="control-btn" onclick="battleAction('run')" style="flex: 1;">💨 逃げる</button>
+                    </div>
+                </div>
+                <div id="rpg-messages" style="margin-top: 1rem; padding: 1rem; background: #e9ecef; border-radius: 8px; max-height: 200px; overflow-y: auto;">
+                    <p>🌟 冒険を始めましょう！マップ上をクリックして移動できます。</p>
+                </div>
+            </div>
+
+            <div id="racing-panel" class="game-mode-panel" style="display: none;">
+                <h2>🏎️ Urban Circuit Racer</h2>
+                <div class="game-info">
+                    <p><strong>レベル:</strong> <span id="racing-level">1</span></p>
+                    <p><strong>所持金:</strong> <span id="racing-money">1000</span> 円</p>
+                    <p><strong>経験値:</strong> <span id="racing-exp">0</span></p>
+                    <p><strong>ベストタイム:</strong> <span id="best-time">--:--</span></p>
+                    <p><strong>現在のタイム:</strong> <span id="current-time">00:00</span></p>
+                    <p><strong>速度:</strong> <span id="current-speed">0</span> km/h</p>
+                    <p><strong>車両:</strong> <span id="current-vehicle">コンパクトカー</span></p>
+                </div>
+                <div class="controls">
+                    <button class="control-btn" onclick="startRace()">🏁 レース開始</button>
+                    <button class="control-btn" onclick="setCheckpoint()">📍 チェックポイント設定</button>
+                    <button class="control-btn" onclick="changeVehicle()">🚗 車両変更</button>
+                    <button class="control-btn" onclick="generateCourse()">🗺️ コース生成</button>
+                    <button class="control-btn" onclick="viewVehicleShop()">🏪 車両ショップ</button>
+                    <button class="control-btn" onclick="viewLeaderboard()">🏆 ランキング</button>
+                </div>
+                <div id="racing-messages" style="margin-top: 1rem; padding: 1rem; background: #e9ecef; border-radius: 8px; max-height: 200px; overflow-y: auto;">
+                    <p>🏎️ レースの準備をしましょう！コースを設定してスタートしてください。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="rpg-enhanced.js"></script>
+    <script src="racing-enhanced.js"></script>
+    <script src="game.js"></script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+    </script>
+</body>
+</html>
+
